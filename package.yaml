@@ -1,0 +1,48 @@
+name:                cubic
+version:             0.1.0.0
+github:              "werediver/cubic-mega"
+license:             BSD3
+author:              "Raman Fedaseyeu"
+maintainer:          "raman.fedaseyeu@gmail.com"
+copyright:           "2018 Raman Fedaseyeu"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Parsing
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/werediver/cubic-mega#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- containers
+- megaparsec >= 7.0 && < 8
+
+ghc-options: -Wall
+
+library:
+  source-dirs: src
+
+executables:
+  cubic-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - cubic
+
+tests:
+  spec:
+    defaults:
+    - hspec/hspec@master
+    dependencies:
+    - cubic
