@@ -27,18 +27,30 @@ spec = do
 
   describe "number parser" $ do
     it "parses zero" $
-      parseMaybe numberLiteral "0" `shouldBe` Just 0
+      parseMaybe jsonNumber "0" `shouldBe` Just (JSONNumber 0)
     it "parses negative zero" $
-      parseMaybe numberLiteral "-0" `shouldBe` Just 0
+      parseMaybe jsonNumber "-0" `shouldBe` Just (JSONNumber 0)
     it "parses single digit number" $
-      parseMaybe numberLiteral "1" `shouldBe` Just 1
+      parseMaybe jsonNumber "1" `shouldBe` Just (JSONNumber 1)
     it "parses multiple digits number" $
-      parseMaybe numberLiteral "123" `shouldBe` Just 123
+      parseMaybe jsonNumber "123" `shouldBe` Just (JSONNumber 123)
     it "parses negative single digit number" $
-      parseMaybe numberLiteral "-1" `shouldBe` Just (-1)
+      parseMaybe jsonNumber "-1" `shouldBe` Just (JSONNumber (-1))
     it "parses negative multiple digits number" $
-      parseMaybe numberLiteral "-123" `shouldBe` Just (-123)
-
+      parseMaybe jsonNumber "-123" `shouldBe` Just (JSONNumber (-123))
+    it "parses fractional part" $
+      parseMaybe jsonNumber "1.012" `shouldBe` Just (JSONNumber 1.012)
+    it "parses exponent without fractional part" $ do
+      parseMaybe jsonNumber "1e2" `shouldBe` Just (JSONNumber 100)
+      parseMaybe jsonNumber "1E2" `shouldBe` Just (JSONNumber 100)
+      parseMaybe jsonNumber "1e+2" `shouldBe` Just (JSONNumber 100)
+      parseMaybe jsonNumber "1e-2" `shouldBe` Just (JSONNumber 0.01)
+    it "parses exponent after fractional part" $ do
+      parseMaybe jsonNumber "1.012e3" `shouldBe` Just (JSONNumber 1012)
+      parseMaybe jsonNumber "1.012E3" `shouldBe` Just (JSONNumber 1012)
+      parseMaybe jsonNumber "1.012e+3" `shouldBe` Just (JSONNumber 1012)
+      parseMaybe jsonNumber "1.012e-3" `shouldBe` Just (JSONNumber 0.001012)
+  
   describe "array parser" $ do
     it "parses empty array without whitespace" $
       parseMaybe jsonArray "[]" `shouldBe` Just (JSONArray [])

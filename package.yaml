@@ -24,7 +24,7 @@ dependencies:
 - containers
 - megaparsec >= 7.0 && < 8
 
-ghc-options: -Wall
+ghc-options: -Wall -XLambdaCase
 
 library:
   source-dirs: src
