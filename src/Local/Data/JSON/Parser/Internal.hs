@@ -1,5 +1,7 @@
 module Local.Data.JSON.Parser.Internal where
 
+import           Numeric                        ( readHex )
+import           Data.Char                      ( chr, isHexDigit )
 import           Local.Data.JSON
 import           Local.Data.JSON.Parser.Internal.Common
 import           Local.Data.JSON.Parser.Internal.Number
@@ -50,11 +52,51 @@ jsonString =
   JSONString <$> stringLiteral <* ws
 
 stringLiteral :: Parser String
-stringLiteral = quote *> body <* quote
+stringLiteral =
+  quote *> body <* quote
   where
     quote = char '"'
-    body  = takeWhileP (Just "string literal character") isStringLiteralChar
-    isStringLiteralChar c = c /= '"' && c /= '\\' && c > '\x1F'
+    body :: Parser String
+    body = concat <$> many (unescapedChunk <|> escapeSequence)
+      where
+        unescapedChunk =
+          takeWhile1P (Just "unescaped string literal character") isStringLiteralChar
+          where
+            isStringLiteralChar c = c /= '"' && c /= '\\' && c > '\x1F'
+        escapeSequence :: Parser String
+        escapeSequence =
+          (:[]) <$> escapeSequence'
+          where
+            escapeSequence' :: Parser Char
+            escapeSequence' =
+              label "escape sequence" $
+                char '\\' *> (singleCharEsc <|> unicodeEsc)
+              where
+                singleCharEsc :: Parser Char
+                singleCharEsc = label "single-character escape sequence" $
+                      oneOf "\"\\/"
+                  <|> oneOf "bfnrt" <&?> \case
+                    'b' -> Just '\b'
+                    'f' -> Just '\f'
+                    'n' -> Just '\n'
+                    'r' -> Just '\r'
+                    't' -> Just '\t'
+                    _   -> Nothing
+                unicodeEsc :: Parser Char
+                unicodeEsc =
+                  label "Unicode code point escape sequence" $
+                    char 'u' *> (chr <$> hexNumber)
+                  where
+                    hexNumber :: Parser Int
+                    hexNumber =
+                      hexDigits <&?> readMaybeHex
+                      where
+                        hexDigits = takeWhileP (Just "hexadecimal digit") isHexDigit
+                        readMaybeHex :: (Eq a, Num a) => String -> Maybe a
+                        readMaybeHex = unpack . readHex
+                          where
+                            unpack ((x, _):_) = Just x
+                            unpack []         = Nothing
 
 jsonBool :: Parser JSON
 jsonBool =
